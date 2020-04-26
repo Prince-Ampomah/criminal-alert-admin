@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -18,7 +17,7 @@ class _HomePageState extends State<HomePage> {
   Circle circle;
   StreamSubscription _locationSubscription;
   Location userLocation = Location();
-  MapType _mapType = MapType.hybrid;
+  MapType _mapType = MapType.normal;
   GoogleMapController _controller;
 
   CameraPosition initialCameraPosition = CameraPosition(
@@ -27,28 +26,31 @@ class _HomePageState extends State<HomePage> {
   );
 
   /*Get marker that is the driving Pin*/
-//  Future<Uint8List> getMarker() async {
-//    ByteData byteData = await DefaultAssetBundle.of(context).load('assets/driving_pin.png');
-//    return byteData.buffer.asUint8List();
-//  }
+  Future<Uint8List> getMarker() async {
+    ByteData byteData = await DefaultAssetBundle.of(context).load('assets/car_icon.png');
+    return byteData.buffer.asUint8List();
+  }
 
- void updateCircleAndMarker(LocationData newLocationData){
+ void updateCircleAndMarker(Uint8List imageData, LocationData newLocationData){
    LatLng latLng = LatLng(newLocationData.latitude, newLocationData.longitude);
    setState(() {
      marker = Marker(
        markerId: MarkerId('driving_pin'),
        position: latLng,
        draggable: false,
+       infoWindow: InfoWindow(
+         title: 'Police Current Location',
+       ),
        flat: true,
        zIndex: 2.0,
        rotation: newLocationData.heading,
        anchor: Offset(0.5, 0.5),
-       icon: BitmapDescriptor.defaultMarker
+       icon: BitmapDescriptor.fromBytes(imageData)
      );
      circle = Circle(
        circleId: CircleId('driving_pin_circle'),
-       fillColor: Colors.blue.withAlpha(70),
-       strokeColor: Colors.blue,
+       fillColor: Colors.red.withAlpha(70),
+       strokeColor: Colors.red,
        strokeWidth: 3,
        center: latLng,
        zIndex: 1,
@@ -62,9 +64,9 @@ class _HomePageState extends State<HomePage> {
  void onMapCreated(GoogleMapController controller) async{
    _controller = controller;
    try{
-      //  Uint8List imageData = await getMarker();
+        Uint8List imageData = await getMarker();
        var location = await userLocation.getLocation();
-       updateCircleAndMarker(location);
+       updateCircleAndMarker(imageData, location);
 
 
        if(_locationSubscription != null){
@@ -76,10 +78,8 @@ class _HomePageState extends State<HomePage> {
            _controller.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
                target: LatLng(currentUserLocation.latitude, currentUserLocation.longitude),
                zoom: 15,
-//               bearing: 192.8334901395799,
-//               tilt: 59.440717697143555
            )));
-           updateCircleAndMarker(currentUserLocation);
+           updateCircleAndMarker(imageData, currentUserLocation);
          }
        });
 
@@ -91,6 +91,13 @@ class _HomePageState extends State<HomePage> {
       ));
     }
    }
+ }
+
+ void onMapTypeChange(){
+    setState(() {
+      _mapType = _mapType == MapType.normal? MapType.hybrid : MapType.normal;
+    });
+
  }
 
  @override
@@ -105,20 +112,28 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        elevation: 0.0,
-        title: Text('Crimial Alert'),
-      ),
       body: Stack(
         children: <Widget>[
           GoogleMap(
             initialCameraPosition: initialCameraPosition,
-            mapType: MapType.hybrid, 
+            mapType: _mapType,
             onMapCreated: onMapCreated,
             myLocationEnabled: true,
-            zoomGesturesEnabled: false,
+            myLocationButtonEnabled: false,
+            zoomGesturesEnabled: true,
             markers: Set.of((marker != null)? [marker] : []),
-            // circles: Set.of((circle != null)? [circle] : []),
+            circles: Set.of((circle != null)? [circle] : []),
+          ),
+          Padding(
+            padding: EdgeInsets.only(top: 80, right: 9),
+            child: Align(
+              alignment: Alignment.topRight,
+              child: FloatingActionButton(
+                onPressed: onMapTypeChange,
+                child: Icon(Icons.map),
+                elevation: 10.0,
+              ),
+            ),
           )
         ],
       ),
