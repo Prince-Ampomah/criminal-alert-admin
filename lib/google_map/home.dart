@@ -37,7 +37,7 @@ class _HomePageState extends State<HomePage> {
      marker = Marker(
        markerId: MarkerId('driving_pin'),
        position: latLng,
-       draggable: false,
+       draggable: true,
        infoWindow: InfoWindow(
          title: 'Police Current Location',
        ),
@@ -77,7 +77,7 @@ class _HomePageState extends State<HomePage> {
          if(_controller != null){
            _controller.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
                target: LatLng(currentUserLocation.latitude, currentUserLocation.longitude),
-               zoom: 15,
+               zoom: 16,
            )));
            updateCircleAndMarker(imageData, currentUserLocation);
          }
@@ -119,13 +119,12 @@ class _HomePageState extends State<HomePage> {
             mapType: _mapType,
             onMapCreated: onMapCreated,
             myLocationEnabled: true,
-            myLocationButtonEnabled: false,
-            zoomGesturesEnabled: true,
+            myLocationButtonEnabled: true,
             markers: Set.of((marker != null)? [marker] : []),
             circles: Set.of((circle != null)? [circle] : []),
           ),
           Padding(
-            padding: EdgeInsets.only(top: 80, right: 9),
+            padding: EdgeInsets.only(top: 100, right: 9),
             child: Align(
               alignment: Alignment.topRight,
               child: FloatingActionButton(
