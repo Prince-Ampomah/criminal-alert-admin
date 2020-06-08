@@ -27,7 +27,11 @@ dependencies:
   location: ^3.0.1
   cloud_firestore: ^0.13.5
   geoflutterfire: ^2.1.0
+  geolocator: ^5.3.1
   data_connection_checker: ^0.3.4
+  flutter_polyline_points: ^0.2.1
+  google_map_polyline:
+  firebase_messaging: ^6.0.16
 
 
 
