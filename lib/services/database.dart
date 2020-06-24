@@ -1,13 +1,10 @@
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
-
-class VictimLocation{
-
+class VictimLocation {
   Set<Marker> marker = Set<Marker>();
   Set<Circle> circle = Set<Circle>();
   Set<Polyline> polyline = Set<Polyline>();
@@ -22,18 +19,17 @@ class VictimLocation{
 //  GeoPoint _geoPoint = GeoPoint(vicLoc.longitude, vicLoc.longitude);
 //  DocumentSnapshot _snapshot;
 
-
   VictimLocation({this.polyline, this.marker, this.circle});
 
   void queryVictimLocation() async {
     CollectionReference locationCollection =
-    Firestore.instance.collection('Location');
+        Firestore.instance.collection('Location');
 
     locationCollection.snapshots().forEach((QuerySnapshot querySnapshot) {
       querySnapshot.documents.forEach((snapshot) async {
-      GeoPoint geoPoint = snapshot.data['userLocation']['geopoint'];
-     LatLng victimLocation = LatLng (geoPoint.latitude, geoPoint.longitude);
-      print("SnapShot Query: $victimLocation");
+        GeoPoint geoPoint = snapshot.data['userLocation']['geopoint'];
+        LatLng victimLocation = LatLng(geoPoint.latitude, geoPoint.longitude);
+        print("SnapShot Query: $victimLocation");
 
         //Convert from LatLng to Address
         List<Placemark> p = await geoLocator.placemarkFromCoordinates(
@@ -45,25 +41,25 @@ class VictimLocation{
           position: victimLocation,
           icon: BitmapDescriptor.defaultMarker,
           infoWindow: InfoWindow(
-            title: '${place.name}, ${place.administrativeArea}',
-            snippet: '${place.locality}, ${place.subAdministrativeArea}',
+            title:
+                '${place.administrativeArea},${place.subAdministrativeArea},${place.postalCode}',
+            snippet: '${place.locality}, ${place.name}, ${place.isoCountryCode}',
           ),
         ));
         circle.add(Circle(
           circleId: CircleId(victimLocation.toString()),
-          fillColor: Colors.redAccent,
+          fillColor: Colors.red[300],
           strokeColor: Colors.red,
           strokeWidth: 3,
           center: victimLocation,
           zIndex: 1,
           radius: 300,
         ));
-
       });
     });
   }
 
-  /*void setPolyLine() async{
+/*void setPolyLine() async{
     PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
         "AIzaSyDrAUtyy_qwqz7g5K9VoLAP_ZCxIeEo6og",
         PointLatLng(6.8084983, -1.424405),
@@ -90,14 +86,31 @@ class VictimLocation{
 
 }
 
-class SaveToken{
+class PoliceUser{
+  String uid;
+  PoliceUser({this.uid});
+
+CollectionReference policedetailsCollection = Firestore.instance.collection('PoliceCollection');
+
+
+  Future<void> policeDetails(String providerId, String name , String email, String phoneNmber, String photoUrl) async{
+    return await policedetailsCollection.document(uid).setData({
+      'ProviderID' : providerId,
+      'Name' : name,
+      'Email' : email,
+      'PhoneNumber': phoneNmber,
+      'Photo' : photoUrl
+    });
+
+  }
+}
+
+class SaveToken {
+  String uid;
+  SaveToken({this.uid});
 
   CollectionReference deviceTokenCollection = Firestore.instance.collection('DeviceToken');
-
-  Future saveDeviceToken(String token) {
-    return deviceTokenCollection.document().setData({
-        'device_token' : token
-    });
+  Future<void> saveDeviceToken(String token) async{
+    return await deviceTokenCollection.document(uid).setData({'device_token': token});
   }
-
 }

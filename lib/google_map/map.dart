@@ -1,15 +1,15 @@
 import 'dart:async';
 import 'package:criminal_alert_admin/ImageAsMarker/marker_Image.dart';
+import 'package:criminal_alert_admin/google_map/popUpButton.dart';
 import 'package:criminal_alert_admin/services/database.dart';
 import 'package:criminal_alert_admin/showSnackBar/snackBar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'dart:typed_data';
-import 'package:firebase_messaging/firebase_messaging.dart';
-
 
 class HomePage extends StatefulWidget {
   @override
@@ -23,10 +23,6 @@ class _HomePageState extends State<HomePage> {
   Location userLocation = Location();
   MapType _mapType = MapType.normal;
   GoogleMapController _controller;
-
-  FirebaseMessaging firebaseMessaging = FirebaseMessaging();
-
-
 
   static LatLng initialPosition = LatLng(37.42796133580664, -122.085749655962);
   CameraPosition initialCameraPosition = CameraPosition(
@@ -58,9 +54,8 @@ class _HomePageState extends State<HomePage> {
       circle: circle,
       marker: marker);
 
-
-  void updatePoliceMarker(
-      Uint8List imageAsMarker, LocationData newLocationData) {
+  void updatePoliceMarker(Uint8List imageAsMarker, LocationData newLocationData)
+  {
     LatLng latLng = LatLng(newLocationData.latitude, newLocationData.longitude);
     setState(() {
       marker.add(Marker(
@@ -80,11 +75,12 @@ class _HomePageState extends State<HomePage> {
   }
 
   void onMapCreated(GoogleMapController controller) async {
-
     setState(() {
       _controller = controller;
       queryLocation.queryVictimLocation();
     });
+
+    mapStyle();
 
     try {
       var markerData = await getImageAsMarker(context);
@@ -104,7 +100,7 @@ class _HomePageState extends State<HomePage> {
           _controller
               .animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
             target: cameraAnimateTarget,
-            zoom: 11,
+            zoom: 11.50,
           )));
 
           updatePoliceMarker(markerData, currentPoliceLoc);
@@ -116,8 +112,8 @@ class _HomePageState extends State<HomePage> {
             position: LatLng(currentPoliceLoc.latitude,
                 currentPoliceLoc.longitude),
             infoWindow: InfoWindow(
-                title: 'Police Lat: ${currentPoliceLoc.latitude}',
-                snippet: "Police Lng: ${currentPoliceLoc.longitude}"),
+                title: 'Police Current Locaton',
+                snippet: "400KM Away from victim"),
             icon: BitmapDescriptor.fromBytes(markerData),
           ));
         }
@@ -126,6 +122,19 @@ class _HomePageState extends State<HomePage> {
       print(e.toString());
     }
 
+  }
+
+  void setMapStyle(String mapstyle){
+    _controller.setMapStyle(mapstyle);
+  }
+
+  Future<String> getMapStyle(String path) async {
+    return await rootBundle.loadString(path);
+  }
+
+  //Map style Change
+  mapStyle(){
+    getMapStyle('assets/mapstyle/nightmapstyle.json').then(setMapStyle);
   }
 
   void _showMapTypeSheet() {
@@ -231,74 +240,20 @@ class _HomePageState extends State<HomePage> {
         });
   }
 
-  /*void queryVictimLocation() async {
-    CollectionReference locationCollection =
-        Firestore.instance.collection('Location');
+ /* addPolyLine(){
+    Polyline(
+      polylineId: PolylineId('poly'),
+      points: polylineCoordinates,
+      color: Colors.blue,
+      visible: true
+    );
+    setState(() {
 
-    locationCollection.snapshots().forEach((QuerySnapshot querySnapshot) {
-      querySnapshot.documents.forEach((snapshot) async {
-        GeoPoint geoPoint = snapshot.data['userLocation']['geopoint'];
-       LatLng victimLocation = LatLng (geoPoint.latitude, geoPoint.longitude);
-        print("SnapShot Query: $victimLocation");
-
-
-        //Convert from LatLng to Address
-        List<Placemark> p = await geoLocator.placemarkFromCoordinates(
-            victimLocation.latitude, victimLocation.longitude);
-        Placemark place = p[0];
-
-        _marker.add(Marker(
-          markerId: MarkerId(victimLocation.toString()),
-          position: victimLocation,
-          icon: BitmapDescriptor.defaultMarker,
-          infoWindow: InfoWindow(
-            title: '${place.name}, ${place.administrativeArea}',
-            snippet: '${place.locality}, ${place.subAdministrativeArea}',
-          ),
-        ));
-        _circle.add(Circle(
-          circleId: CircleId(victimLocation.toString()),
-          fillColor: Colors.black54,
-          strokeColor: Colors.black,
-          strokeWidth: 5,
-          center: victimLocation,
-          zIndex: 1,
-          radius: 300,
-        ));
-
-      });
     });
-  }*/
+  }
 
-
-@override
-void initState() {
-  super.initState();
-  sendNotification();
-  
-}
-
-
-void sendNotification() async{
-  firebaseMessaging.getToken().then((token){
-    print("TOKEN: $token");
-    SaveToken().saveDeviceToken(token);
-  });
-
-  firebaseMessaging.configure(
-    onMessage:  (Map<String, dynamic> message) async{
-      print("nMessage: $message");
-    },
-    onResume: (Map<String, dynamic> message) async{
-      print("onResume: $message");
-    },
-    onLaunch: (Map<String, dynamic> message) async{
-      print("onLaunch: $message");
-    },
-  );
-}
-  /*getPolyline() async{
-    PolylineResult result = await polylinePoints.
+  getPolyline() async{
+   PolylineResult result = await polylinePoints.
     getRouteBetweenCoordinates(
         'AIzaSyDrAUtyy_qwqz7g5K9VoLAP_ZCxIeEo6og',
         PointLatLng(_originLatitude, _originLongitude),
@@ -312,8 +267,10 @@ void sendNotification() async{
         polylineCoordinates.add(LatLng(point.latitude, point.longitude));
       });
     }
-
+    addPolyLine();
   }*/
+
+
 
   @override
   void dispose() {
@@ -325,48 +282,41 @@ void sendNotification() async{
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        key: scaffoldKey,
-        body: Stack(
-          children: <Widget>[
-            GoogleMap(
-              initialCameraPosition: initialCameraPosition,
-              mapType: _mapType,
-              onMapCreated: onMapCreated,
-              myLocationEnabled: true,
-              myLocationButtonEnabled: true,
-              compassEnabled: true,
-              markers: marker,
-              circles: circle,
-              polylines: polyline,
-            ),
-            Padding(
-              padding: EdgeInsets.only(top: 80, right: 8.5),
-              child: Align(
-                alignment: Alignment.topRight,
-                child: FloatingActionButton(
-                  onPressed: _showMapTypeSheet,
-                  child: Icon(Icons.map),
-                  elevation: 5.0,
-                  tooltip: 'Map Type',
-                ),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Crime Alert Admin'),
+        backgroundColor: Colors.redAccent,
+        actions: <Widget>[
+        popupMenuButton(context),
+        ],),
+      key: scaffoldKey,
+      body: Stack(
+        fit: StackFit.expand,
+        children: <Widget>[
+          GoogleMap(
+            initialCameraPosition: initialCameraPosition,
+            mapType: _mapType,
+            onMapCreated: onMapCreated,
+            myLocationEnabled: true,
+            myLocationButtonEnabled: true,
+            compassEnabled: true,
+            markers: marker,
+            circles: circle,
+            polylines: polyline,
+          ),
+          Padding(
+            padding: EdgeInsets.only(top: 80, right: 8.5),
+            child: Align(
+              alignment: Alignment.topRight,
+              child: FloatingActionButton(
+                onPressed: _showMapTypeSheet,
+                child: Icon(Icons.map),
+                elevation: 5.0,
+                tooltip: 'Map Type',
               ),
             ),
-            //  Padding(
-            //    padding: EdgeInsets.only(top: 80, right: 8.5),
-            //    child: Align(
-            //      alignment: Alignment.topRight,
-            //      child: FloatingActionButton(
-            //        onPressed: startQuery,
-            //        child: Icon(Icons.add),
-            //        elevation: 5.0,
-            //        tooltip: 'Select Map Type',
-            //      ),
-            //    ),
-            //  )
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
