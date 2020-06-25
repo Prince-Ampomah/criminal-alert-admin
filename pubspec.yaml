@@ -28,6 +28,7 @@ dependencies:
   cloud_firestore: ^0.13.5
   firebase_messaging: ^6.0.16
   firebase_auth: ^0.16.1
+  flutter_auth_buttons: ^0.8.0
   google_sign_in: ^4.5.1
   geoflutterfire: ^2.1.0
   geolocator: ^5.3.1

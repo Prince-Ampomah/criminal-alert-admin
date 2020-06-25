@@ -64,6 +64,8 @@ Future loginWithGoogle() async{
 Future signOut() async{
   try{
     await _auth.signOut();
+    await googleSignIn.disconnect();
+    await googleSignIn.signOut();
     print('signed out');
   }catch(error)
   {
