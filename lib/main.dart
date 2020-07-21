@@ -1,9 +1,7 @@
-
 import 'package:criminal_alert_admin/services/auth.dart';
 import 'package:criminal_alert_admin/wrapper/wrapper.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 
 void main() => runApp(MyApp());
 
@@ -12,15 +10,15 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamProvider.value(
-          value: AuthServices().user,
-          child: MaterialApp(
-          title: 'Criminal Alert Admin',
-          debugShowCheckedModeBanner: false,
-          theme: ThemeData(
-      primarySwatch: Colors.blue,
-          ),
-          home: Wrapper(),
+      value: AuthServices().user,
+      child: MaterialApp(
+        title: 'Criminal Alert Admin',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          primaryColor: Colors.redAccent,
         ),
+        home: Wrapper(),
+      ),
     );
   }
 }

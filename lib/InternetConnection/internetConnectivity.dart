@@ -4,11 +4,10 @@ import 'package:data_connection_checker/data_connection_checker.dart';
 
 StreamSubscription listener;
 
-checkInternetConnection() async{
-
+checkInternetConnection() async {
   // Simple check to see if we have internet
 //  print("The statement 'this machine is connected to the Internet' is: ");
-//  print(await DataConnectionChecker().hasConnection);
+  print(await DataConnectionChecker().hasConnection);
   // returns a bool
 
   // We can also get an enum value instead of a bool
@@ -37,9 +36,8 @@ checkInternetConnection() async{
   });
 
   // close listener after 30 seconds, so the program doesn't run forever
-    await Future.delayed(Duration(seconds: 30));
-    await listener.cancel();
+  await Future.delayed(Duration(seconds: 30));
+  await listener.cancel();
 
 //  return DataConnectionChecker().connectionStatus;
-
 }

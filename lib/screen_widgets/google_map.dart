@@ -1,23 +1,22 @@
 import 'dart:async';
 import 'package:criminal_alert_admin/ImageAsMarker/marker_Image.dart';
-import 'package:criminal_alert_admin/google_map/popUpButton.dart';
+import 'package:criminal_alert_admin/shared_widgets/popUpButton.dart';
 import 'package:criminal_alert_admin/services/database.dart';
 import 'package:criminal_alert_admin/showSnackBar/snackBar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+import 'package:google_map_polyline/google_map_polyline.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'dart:typed_data';
 
-class HomePage extends StatefulWidget {
+class Map extends StatefulWidget {
   @override
-  _HomePageState createState() => _HomePageState();
+  _MapState createState() => _MapState();
 }
 
-class _HomePageState extends State<HomePage> {
-
+class _MapState extends State<Map> {
   //Declaration of Map Variables
   StreamSubscription _locationSubscription;
   Location userLocation = Location();
@@ -30,9 +29,8 @@ class _HomePageState extends State<HomePage> {
     zoom: 14.4746,
   );
   static LocationData currentPoliceLoc;
-  static LatLng  cameraAnimateTarget = LatLng(currentPoliceLoc.latitude,
-      currentPoliceLoc.longitude);
-
+  static LatLng cameraAnimateTarget =
+      LatLng(currentPoliceLoc.latitude, currentPoliceLoc.longitude);
 
   static Set<Marker> marker = Set<Marker>();
   static Set<Circle> circle = Set<Circle>();
@@ -40,22 +38,17 @@ class _HomePageState extends State<HomePage> {
 
   List<LatLng> polylineCoordinates = [];
   PolylinePoints polylinePoints = PolylinePoints();
-  double _originLatitude = 6.8084983, _originLongitude = -1.424405;
-  double _destLatitude = 6.7443465, _destLongitude = -1.5653409;
 
- List<LatLng> routes = [LatLng(6.8084983, -1.424405), LatLng(6.7443465, -1.5653409)];
-
+  List<LatLng> routes = [];
   static String googleAPIKey = 'AIzaSyDrAUtyy_qwqz7g5K9VoLAP_ZCxIeEo6og';
-//  GoogleMapPolyline googleMapPolyline = GoogleMapPolyline(apiKey: googleAPIKey);
+  GoogleMapPolyline googleMapPolyline = GoogleMapPolyline(apiKey: googleAPIKey);
 
   // Initialize VictimLocation Class
-  VictimLocation queryLocation = VictimLocation(
-      polyline: polyline,
-      circle: circle,
-      marker: marker);
+  VictimLocation queryLocation =
+      VictimLocation(polyline: polyline, circle: circle, marker: marker);
 
-  void updatePoliceMarker(Uint8List imageAsMarker, LocationData newLocationData)
-  {
+  void updatePoliceMarker(
+      Uint8List imageAsMarker, LocationData newLocationData) {
     LatLng latLng = LatLng(newLocationData.latitude, newLocationData.longitude);
     setState(() {
       marker.add(Marker(
@@ -63,8 +56,7 @@ class _HomePageState extends State<HomePage> {
         position: latLng,
         draggable: false,
         infoWindow: InfoWindow(
-            title: 'Police Current Location',
-            snippet: '400KM away from victim'),
+            title: 'Police Current Location', snippet: '40KM away from victim'),
         flat: false,
         icon: BitmapDescriptor.fromBytes(imageAsMarker),
 //        zIndex: 2.0,
@@ -74,13 +66,26 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  void setMapStyle() async {
+    String mapstyle = await DefaultAssetBundle.of(context)
+        .loadString('assets/mapstyle/nightmapstyle.json');
+    _controller.setMapStyle(mapstyle);
+  }
+
+  /* void getPoints() async{
+    routes = await googleMapPolyline
+        .getCoordinatesWithLocation(
+        origin: LatLng(6.8085577, -1.422871),
+        destination: LatLng(6.7817781, -1.6904964),
+        mode: RouteMode.driving);
+  }*/
+
   void onMapCreated(GoogleMapController controller) async {
     setState(() {
       _controller = controller;
       queryLocation.queryVictimLocation();
+      setMapStyle();
     });
-
-    mapStyle();
 
     try {
       var markerData = await getImageAsMarker(context);
@@ -93,8 +98,7 @@ class _HomePageState extends State<HomePage> {
 
       _locationSubscription = userLocation.onLocationChanged
           .listen((LocationData currentPoliceLocation) {
-
-            currentPoliceLoc = currentPoliceLocation;
+        currentPoliceLoc = currentPoliceLocation;
 
         if (_controller != null) {
           _controller
@@ -109,11 +113,11 @@ class _HomePageState extends State<HomePage> {
           marker.removeWhere((m) => m.markerId.value == 'police_marker');
           marker.add(Marker(
             markerId: MarkerId('police_marker'),
-            position: LatLng(currentPoliceLoc.latitude,
-                currentPoliceLoc.longitude),
+            position:
+                LatLng(currentPoliceLoc.latitude, currentPoliceLoc.longitude),
             infoWindow: InfoWindow(
                 title: 'Police Current Locaton',
-                snippet: "400KM Away from victim"),
+                snippet: "40KM Away from victim"),
             icon: BitmapDescriptor.fromBytes(markerData),
           ));
         }
@@ -121,20 +125,6 @@ class _HomePageState extends State<HomePage> {
     } catch (e) {
       print(e.toString());
     }
-
-  }
-
-  void setMapStyle(String mapstyle){
-    _controller.setMapStyle(mapstyle);
-  }
-
-  Future<String> getMapStyle(String path) async {
-    return await rootBundle.loadString(path);
-  }
-
-  //Map style Change
-  mapStyle(){
-    getMapStyle('assets/mapstyle/nightmapstyle.json').then(setMapStyle);
   }
 
   void _showMapTypeSheet() {
@@ -164,57 +154,51 @@ class _HomePageState extends State<HomePage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: <Widget>[
-                            InkWell(
-                              onTap: () {
-                                setState(() {
-                                  _mapType = MapType.normal;
-                                  Navigator.of(context).pop();
-                                });
-                              },
+                            GestureDetector(
+                              onTap: () =>
+                                  setState(() {
+                                    _mapType = MapType.normal;
+                                    Navigator.of(context).pop();
+                                  }),
+                              child: Container(
+                                height: 60.0,
+                                width: 60.0,
+                                decoration: BoxDecoration(
+                                  image: DecorationImage(
+                                      image: AssetImage('assets/normal_type.png'),
+                                      fit: BoxFit.cover),
+                                ),
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: () => setState(() {
+                                _mapType = MapType.hybrid;
+                                Navigator.of(context).pop();
+                              }),
                               child: Container(
                                 height: 60.0,
                                 width: 60.0,
                                 decoration: BoxDecoration(
                                   image: DecorationImage(
                                       image:
-                                          AssetImage('assets/normal_type.png'),
+                                          AssetImage('assets/hybrid_type.jpeg'),
                                       fit: BoxFit.cover),
                                 ),
                               ),
                             ),
-                            Container(
-                              height: 60.0,
-                              width: 60.0,
-                              decoration: BoxDecoration(
-                                image: DecorationImage(
-                                    image:
-                                        AssetImage('assets/hybrid_type.jpeg'),
-                                    fit: BoxFit.cover),
-                              ),
-                              child: InkWell(
-                                onTap: () {
-                                  setState(() {
-                                    _mapType = MapType.hybrid;
-                                    Navigator.of(context).pop();
-                                  });
-                                },
-                              ),
-                            ),
-                            Container(
-                              height: 60.0,
-                              width: 60.0,
-                              decoration: BoxDecoration(
-                                image: DecorationImage(
-                                    image: AssetImage('assets/terrain.jpeg'),
-                                    fit: BoxFit.cover),
-                              ),
-                              child: InkWell(
-                                onTap: () {
-                                  setState(() {
-                                    _mapType = MapType.terrain;
-                                    Navigator.of(context).pop();
-                                  });
-                                },
+                            GestureDetector(
+                              onTap: () => setState(() {
+                                _mapType = MapType.terrain;
+                                Navigator.of(context).pop();
+                              }),
+                              child: Container(
+                                height: 60.0,
+                                width: 60.0,
+                                decoration: BoxDecoration(
+                                  image: DecorationImage(
+                                      image: AssetImage('assets/terrain.jpeg'),
+                                      fit: BoxFit.cover),
+                                ),
                               ),
                             ),
                           ],
@@ -240,7 +224,7 @@ class _HomePageState extends State<HomePage> {
         });
   }
 
- /* addPolyLine(){
+  /* addPolyLine(){
     Polyline(
       polylineId: PolylineId('poly'),
       points: polylineCoordinates,
@@ -270,8 +254,6 @@ class _HomePageState extends State<HomePage> {
     addPolyLine();
   }*/
 
-
-
   @override
   void dispose() {
     if (_locationSubscription != null) {
@@ -282,15 +264,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Crime Alert Admin'),
-        backgroundColor: Colors.redAccent,
-        actions: <Widget>[
-        popupMenuButton(context),
-        ],),
-      key: scaffoldKey,
-      body: Stack(
+    return Stack(
         fit: StackFit.expand,
         children: <Widget>[
           GoogleMap(
@@ -317,7 +291,6 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
         ],
-      ),
-    );
+      );
   }
 }

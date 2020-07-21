@@ -11,7 +11,7 @@
     
     <application
         android:name="io.flutter.app.FlutterApplication"
-        android:label="criminal_alert_admin"
+        android:label="Criminal Alert (ADMIN)"
         android:icon="@mipmap/ic_launcher">
         <meta-data android:name="com.google.android.geo.API_KEY"
                android:value="AIzaSyDrAUtyy_qwqz7g5K9VoLAP_ZCxIeEo6og"/>
